@@ -7,6 +7,7 @@ import stat
 import subprocess
 import sys
 from datetime import datetime
+import textwrap
 
 import jinja2
 import yaml
@@ -164,8 +165,10 @@ class Builder:
         self._environment_meta = meta
 
     def generate(self, recipe):
-        # make the paths
-        store_path = self.path / "store"
+        # make the paths, in case bwrap is not used, directly write to recipe.mount
+        store_path = (
+            self.path / "store" if not recipe.no_brwap else pathlib.Path(recipe.mount)
+        )
         tmp_path = self.path / "tmp"
 
         self.path.mkdir(exist_ok=True, parents=True)
@@ -242,11 +245,26 @@ class Builder:
             )
             f.write("\n")
 
+        sandbox = textwrap.dedent(
+            """\
+        $(SOFTWARE_STACK_PROJECT)/bwrap-mutable-root.sh $\\
+        --tmpfs ~ $\\
+        --bind $(SOFTWARE_STACK_PROJECT)/tmp /tmp $\\
+        --bind $(SOFTWARE_STACK_PROJECT)/store $(STORE)
+        """
+        )
+
+        if recipe.no_brwap:
+            sandbox = ""
+
         make_user_template = jinja_env.get_template("Make.user")
         with (self.path / "Make.user").open("w") as f:
             f.write(
                 make_user_template.render(
-                    build_path=self.path, store=recipe.mount, verbose=False
+                    build_path=self.path,
+                    store=recipe.mount,
+                    sandbox=sandbox,
+                    verbose=False,
                 )
             )
             f.write("\n")
@@ -441,7 +459,7 @@ class Builder:
             f.write(modules_yaml)
 
         # write the meta data
-        meta_path = self.path / "store/meta"
+        meta_path = store_path / "meta"
         meta_path.mkdir(exist_ok=True)
         # write a json file with basic meta data
         with (meta_path / "configure.json").open("w") as f:
