@@ -21,7 +21,7 @@ all:{% for env in environments %} {{ env }}/generated/build_cache{% endfor %}
 	$(SPACK) -e ./{{ env }} buildcache create --rebuild-index --allow-root --only=package alpscache \
 	$$($(SPACK) --color=never -e ./{{ env }} find --format '{name};{/hash};version={version}' \
 	| grep -v -E '^({% for p in config.exclude_from_cache %}{{ pipejoiner() }}{{ p }}{% endfor %});'\
-  | grep -v -E 'version=git\.'\
+	| grep -v -E 'version=git\.'\
 	| cut -d ';' -f2)
 {% endif %}
 	touch $@
