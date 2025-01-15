@@ -14,6 +14,7 @@ endif
 
 store:
 	mkdir -p $(STORE)
+	mkdir -p $(STORE)/stage-dir
 
 # Concretization
 %/spack.lock: %/spack.yaml %/compilers.yaml %/config.yaml %/packages.yaml
