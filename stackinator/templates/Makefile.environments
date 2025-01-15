@@ -42,7 +42,7 @@ all:{% for env in environments %} {{ env }}/generated/build_cache{% endfor %}
 
 {% for env in environments %}{{ env }}/config.yaml {% endfor %}: | store
 	$(SPACK) config --scope=user add config:install_tree:root:$(STORE)
-	$(SPACK) config --scope=user add config:build_stage:root:$(STORE)/stage-dir
+	$(SPACK) config --scope=user add config:build_stage:$(STORE)/stage-dir
 
 # Create the compilers.yaml configuration for each environment
 {% for env, config in environments.items() %}
